@@ -2,9 +2,18 @@ import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
 
 async function seed() {
+  const kody = await db.user.create({
+    data: {
+      username: "kody",
+      // this is a hashed version of "twixrox"
+      passwordHash:
+        "$2b$10$K7L1OJ45/4Y2nIvhRVpCe.FSmhDdWoXehVzJptJ/op0lSsvqNu/1u"
+    }
+  });
   await Promise.all(
     getJokes().map(joke => {
-      return db.joke.create({ data: joke });
+      const data = { jokesterId: kody.id, ...joke };
+      return db.joke.create({ data });
     })
   );
 }
@@ -42,18 +51,6 @@ function getJokes() {
     {
       name: "Elevator",
       content: `My first time using an elevator was an uplifting experience. The second time let me down.`
-    },
-    {
-      name: "Deer joke #1",
-      content: `What do you call a deer without eyes? No eye deer!`
-    },
-    {
-      name: "Deer joke #2",
-      content: `What do you call a deer without eyes & legs? Still no eye deer!`
-    },
-    {
-      name: "Deer joke #3",
-      content: `What do you call a deer without eyes & legs and on fire? Still no flaming eye deer!`
     }
   ];
 }
