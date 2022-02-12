@@ -3,6 +3,7 @@ import {
   ActionFunction,
   LoaderFunction,
   redirect,
+  useCatch,
   useLoaderData,
   useParams,
 } from "remix";
@@ -21,7 +22,13 @@ export const loader: LoaderFunction = async ({ params }) => {
   const joke = await db.joke.findUnique({
     where: { id: params.jokeId },
   });
-  if (!joke) throw new Error("Joke not found");
+
+  if (!joke) {
+    throw new Response("What a joke! Not found.", {
+      status: 404,
+    });
+  }
+
   return joke;
 };
 
@@ -39,6 +46,20 @@ export default function JokeRoute() {
       </form>
     </div>
   );
+}
+
+export function CatchBoundary() {
+  const caught = useCatch();
+  const params = useParams();
+  if (caught.status === 404) {
+    return (
+      <div className="error-container">
+        <p>{caught.data}</p>
+        Huh? What the heck is "{params.jokeId}"?
+      </div>
+    );
+  }
+  throw new Error(`Unhandled error: ${caught.status}`);
 }
 
 export function ErrorBoundary() {
