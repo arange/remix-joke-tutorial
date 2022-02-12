@@ -26,7 +26,7 @@ export default function JokeRoute() {
       <p>Here's your hilarious joke:</p>
       <p>{joke.content}</p>
       <form method="post">
-        <input type="hidden" name="id" value={joke.id} readOnly />
+        <input type="hidden" name="id" value={joke.id} />
         <button className="button" type="submit">
           Delete
         </button>
