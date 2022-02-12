@@ -1,13 +1,9 @@
 import type { ActionFunction, LinksFunction } from "remix";
-import {
-  useActionData,
-  json,
-  Link,
-  useSearchParams
-} from "remix";
+import { useActionData, json, Link, useSearchParams } from "remix";
 
 import { db } from "~/utils/db.server";
 import stylesUrl from "~/styles/login.css";
+import { login } from "~/utils/session.server";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: stylesUrl }];
@@ -38,12 +34,9 @@ type ActionData = {
   };
 };
 
-const badRequest = (data: ActionData) =>
-  json(data, { status: 400 });
+const badRequest = (data: ActionData) => json(data, { status: 400 });
 
-export const action: ActionFunction = async ({
-  request
-}) => {
+export const action: ActionFunction = async ({ request }) => {
   const form = await request.formData();
   const loginType = form.get("loginType");
   const username = form.get("username");
@@ -56,49 +49,54 @@ export const action: ActionFunction = async ({
     typeof redirectTo !== "string"
   ) {
     return badRequest({
-      formError: `Form not submitted correctly.`
+      formError: `Form not submitted correctly.`,
     });
   }
 
   const fields = { loginType, username, password };
   const fieldErrors = {
     username: validateUsername(username),
-    password: validatePassword(password)
+    password: validatePassword(password),
   };
   if (Object.values(fieldErrors).some(Boolean))
     return badRequest({ fieldErrors, fields });
 
   switch (loginType) {
     case "login": {
-      // login to get the user
-      // if there's no user, return the fields and a formError
-      // if there is a user, create their session and redirect to /jokes
+      const user = await login({ username, password });
+      console.log({ user });
+      if (!user) {
+        return badRequest({
+          fields,
+          formError: "Username/Password combination is incorrect",
+        });
+      }
       return badRequest({
         fields,
-        formError: "Not implemented"
+        formError: "Not implemented",
       });
     }
     case "register": {
       const userExists = await db.user.findFirst({
-        where: { username }
+        where: { username },
       });
       if (userExists) {
         return badRequest({
           fields,
-          formError: `User with username ${username} already exists`
+          formError: `User with username ${username} already exists`,
         });
       }
       // create the user
       // create their session and redirect to /jokes
       return badRequest({
         fields,
-        formError: "Not implemented"
+        formError: "Not implemented",
       });
     }
     default: {
       return badRequest({
         fields,
-        formError: `Login type invalid`
+        formError: `Login type invalid`,
       });
     }
   }
@@ -114,22 +112,16 @@ export default function Login() {
         <form
           method="post"
           aria-describedby={
-            actionData?.formError
-              ? "form-error-message"
-              : undefined
+            actionData?.formError ? "form-error-message" : undefined
           }
         >
           <input
             type="hidden"
             name="redirectTo"
-            value={
-              searchParams.get("redirectTo") ?? undefined
-            }
+            value={searchParams.get("redirectTo") ?? undefined}
           />
           <fieldset>
-            <legend className="sr-only">
-              Login or Register?
-            </legend>
+            <legend className="sr-only">Login or Register?</legend>
             <label>
               <input
                 type="radio"
@@ -147,10 +139,7 @@ export default function Login() {
                 type="radio"
                 name="loginType"
                 value="register"
-                defaultChecked={
-                  actionData?.fields?.loginType ===
-                  "register"
-                }
+                defaultChecked={actionData?.fields?.loginType === "register"}
               />{" "}
               Register
             </label>
@@ -162,13 +151,9 @@ export default function Login() {
               id="username-input"
               name="username"
               defaultValue={actionData?.fields?.username}
-              aria-invalid={Boolean(
-                actionData?.fieldErrors?.username
-              )}
+              aria-invalid={Boolean(actionData?.fieldErrors?.username)}
               aria-describedby={
-                actionData?.fieldErrors?.username
-                  ? "username-error"
-                  : undefined
+                actionData?.fieldErrors?.username ? "username-error" : undefined
               }
             />
             {actionData?.fieldErrors?.username ? (
@@ -189,14 +174,10 @@ export default function Login() {
               defaultValue={actionData?.fields?.password}
               type="password"
               aria-invalid={
-                Boolean(
-                  actionData?.fieldErrors?.password
-                ) || undefined
+                Boolean(actionData?.fieldErrors?.password) || undefined
               }
               aria-describedby={
-                actionData?.fieldErrors?.password
-                  ? "password-error"
-                  : undefined
+                actionData?.fieldErrors?.password ? "password-error" : undefined
               }
             />
             {actionData?.fieldErrors?.password ? (
@@ -211,10 +192,7 @@ export default function Login() {
           </div>
           <div id="form-error-message">
             {actionData?.formError ? (
-              <p
-                className="form-validation-error"
-                role="alert"
-              >
+              <p className="form-validation-error" role="alert">
                 {actionData?.formError}
               </p>
             ) : null}
