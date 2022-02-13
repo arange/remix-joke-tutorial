@@ -1,5 +1,5 @@
 import type { User } from "@prisma/client";
-import type { LinksFunction, LoaderFunction } from "remix";
+import { Form, LinksFunction, LoaderFunction } from "remix";
 import { Link, Outlet, useLoaderData } from "remix";
 
 import { db } from "~/utils/db.server";
@@ -46,11 +46,11 @@ export default function JokesRoute() {
           {data.user ? (
             <div className="user-info">
               <span>{`Hi ${data.user.username}`}</span>
-              <form action="/logout" method="post">
+              <Form action="/logout" method="post">
                 <button type="submit" className="button">
                   Logout
                 </button>
-              </form>
+              </Form>
             </div>
           ) : (
             <Link to="/login">Login</Link>
